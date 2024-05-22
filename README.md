@@ -4,6 +4,7 @@
 На данный момент поддерживаются следующие задачи: *регрессия
 
 Построение модели состоит из трёх шагов:
+
 0) from AutoML import autoML
 1) model = autoML('Regression')
 2) model.fit(data, target)
