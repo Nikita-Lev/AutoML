@@ -10,4 +10,17 @@
 2) model.fit(data, target)
 3) model.predict(X_test)
 
+
+Используемые модели:
+| Регрессия         | Классификация       | _Скоро..._          |
+| -------------     | -------------       | -------------       |
+| Linear Regression | Logistic Regression |                     |
+| Lasso Regression  | SVM                 |                     |
+| Ridge Regression  | XGBoost             |                     |
+| SVM               | Random Forest       |                     |
+| XGBoost           | _скоро..._          |                     |
+| Random Forest     |                     |                     |
+| _скоро..._        |                     |                     |
+
+
 * Бинарная
