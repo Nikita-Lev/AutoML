@@ -2,6 +2,7 @@
 # coding: utf-8
 
 from Regression import Regressor
+from Classification import Classificator
 
 class autoML:
     ''' Автоматический подбор лучшей ML или DL модели для задачи регрессии, класификации, прогнозирования временных рядов
