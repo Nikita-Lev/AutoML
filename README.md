@@ -3,12 +3,14 @@
 
 На данный момент проект в разработке, поддерживаются следующие задачи: регрессия, *классификация
 
-Построение модели состоит из трёх шагов:
+Построение модели состоит из четырёх шагов:
 
-0) from AutoML import autoML
-1) model = autoML('Regression')
-2) model.fit(data, target)
-3) model.predict(X_test)
+```python
+from AutoML import autoML
+model = autoML(task) # task = 'Regression' | 'Classification'
+model.fit(data, target)
+model.predict(X_test)
+```
 
 
 Используемые модели:
