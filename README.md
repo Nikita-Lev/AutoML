@@ -7,7 +7,7 @@
 
 ```python
 from AutoML import autoML
-model = autoML(task) # task = 'Regression' | 'Classification'
+model = autoML(task) # task = 'Regression' | 'Classification' | 'Clusterization'
 model.fit(data, target)
 model.predict(X_test)
 ```
