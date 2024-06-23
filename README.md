@@ -1,7 +1,5 @@
 # AutoML
-Автоматический подбор ML модели для различных ML задач
-
-Поддерживаются следующие задачи: регрессия, *классификация, кластеризация
+Автоматический подбор ML | DL модели для ML задач: регрессия, *классификация, кластеризация
 
 Построение модели состоит из четырёх шагов:
 
@@ -17,12 +15,13 @@ model.predict(X_test)
 | Регрессия         | Классификация       | Кластеризация             |
 | -------------     | -------------       | -------------             |
 | Linear Regression | Logistic Regression | DBSCAN (авто)             |
-| Lasso Regression  | SVM                 | K-Means (число кластеров) |
-| Ridge Regression  | XGBoost             |                           |
+| AutoKeras         | SVM                 | K-Means (число кластеров) |
+| SVM               | XGBoost             |                           |
 | Random Forest     | CatBoost            |                           |
 | CatBoost          | Random Forest       |                           |
-| XGBoost           |                     |                           |
-| SVM               |                     |                           |
+| XGBoost           | AutoKeras           |                           |
+| Lasso Regression  |                     |                           |
+| Ridge Regression  |                     |                           |
 
 Предобработка данных включает следующие этапы:
 1) Удаление пропусков в target
