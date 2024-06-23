@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # coding: utf-8
 
 import numpy as np
@@ -7,14 +6,14 @@ from tqdm import tqdm
 import warnings
 
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, cross_validate
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.decomposition import PCA
 
 class Model:
-    def fit(self, data, target, metrics = []):#, model = None, **kwargs):
+    def fit(self, data, target, metrics = [], preprocessing = True):#, model = None, **kwargs):
         '''
         Подготовка данных, обучение моделей
         
@@ -24,9 +23,11 @@ class Model:
             Данные в формате словаря {Признак: список значений} или массива размерности (n_samples, n_features)
         target : str or array_like
             Название целевой переменнной, если содержится в data или явно массив длины n_samples
-        metrics : array_like, default = None
+        metrics : array_like, default None
             Список метрик качества модели для вывода, доступные варианты: 'explained_variance', 'r2', 'max_error', 'neg_median_absolute_error', 'neg_mean_absolute_error', neg_mean_absolute_percentage_error', 'neg_mean_squared_log_error', 'neg_root_mean_squared_error', 'neg_mean_poisson_deviance', 'neg_mean_gamma_deviance', 'accuracy', 'top_k_accuracy', 'roc_auc_ovr', 'roc_auc_ovo', 'roc_auc_ovr_weighted', 'roc_auc_ovo_weighted', 'balanced_accuracy', 'average_precision', 'neg_log_loss', 'neg_brier_score', 'adjusted_rand_score', 'rand_score', 'homogeneity_score', 'completeness_score', 'v_measure_score', 'mutual_info_score', 'adjusted_mutual_info_score', 'normalized_mutual_info_score', 'fowlkes_mallows_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'jaccard', 'jaccard_macro', 'jaccard_micro', 'jaccard_samples', 'jaccard_weighted'
-        model : {'Linear Regression', ...}, default = None
+        preprocessing : bool, default True
+            Использование встроенной предобработки данных, по умолчанию да
+        model : {'Linear Regression', ...}, default None
             Модель для выбора, по умолчанию автоподбор
         kwargs
             Параметры выбранной модели
@@ -63,13 +64,23 @@ class Model:
             self.pipeline = Pipeline(self.steps + [('', self.models[model_name][0])])
             
             # Подбор гиперпараметров
-            self.searcher = GridSearchCV(self.pipeline, param_grid = self.models[model_name][1], cv = 5, n_jobs = -1,
-                                         scoring = self.metrics, refit = self.metrics[0])
+            if model_name != 'Auto Keras':
+                self.searcher = GridSearchCV(self.pipeline, param_grid = self.models[model_name][1], cv = 5, n_jobs = -1, scoring = self.metrics, refit = self.metrics[0])
+            else:
+                self.searcher = self.pipeline
+                
             self.searcher.fit(self.X, self.y)
             
             # Выделение метрик качества лучшей конфигурации модели
-            scorings = pd.DataFrame(self.searcher.cv_results_)[list(map(lambda x : 'mean_test_' + x, self.metrics))]
-            metrics_val = scorings.iloc[np.where(scorings == self.searcher.best_score_)[0][0]].values.tolist()
+            if model_name != 'Auto Keras':
+                scorings = pd.DataFrame(self.searcher.cv_results_)[list(map(lambda x : 'mean_test_' + x, self.metrics))]
+                metrics_val = np.round(scorings.iloc[np.where(scorings == self.searcher.best_score_)[0][0]].values, 2).tolist()
+            else:
+                cv = cross_validate(self.searcher, self.X, self.y, cv = 5, scoring = self.metrics)
+                metrics_val = np.round(pd.DataFrame(cv)[list(map(lambda x : 'test_' + x, self.metrics))].mean().values, 2).tolist()
+                self.searcher.best_params_ = ''
+                self.searcher.best_score_ = metrics_val[0]
+                self.searcher.best_estimator_ = self.searcher
 
             results.append([model_name, self.searcher.best_params_, abs(self.searcher.best_score_)] + metrics_val[1:])
             
@@ -111,7 +122,7 @@ class Model:
         categorical_cols = df.select_dtypes(include=['object', 'category']).columns
         categorical_transformer = Pipeline(steps=[
             ('imputer', SimpleImputer(strategy = 'most_frequent')),
-            ('onehot', OneHotEncoder(handle_unknown = 'ignore'))
+            ('onehot', OneHotEncoder(handle_unknown = 'ignore', sparse = False))
         ])
         
         # Стандартизация вещественных признаков
@@ -127,6 +138,7 @@ class Model:
                 ('cat', categorical_transformer, categorical_cols)
             ]
         )
+        
         
         self.X = df
         self.columns = self.X.columns
@@ -148,10 +160,13 @@ class Model:
         X_test : dict or array_like or pd.DataFrame
             Данные в формате словаря {Признак: список значений} или массива размерности (n_samples, n_features)
             n_features должно соответствовать n_features of data
-        metrics : array_like, default = None
-            Список метрик качества моделей для вывода
-        plot : bool, default = False
+        plot : bool, default False
             Построение графика прогнозов
+        
+        Returns
+        -------
+        array
+            Список прогнозов
         '''
         
         if self.model:
@@ -167,3 +182,4 @@ class Model:
         q1, q3 = df[self.target].quantile([0.25, 0.75])
         IQR = q3 - q1
         return df[(df[self.target] > q1 - 1.5 * IQR) & (df[self.target] < q3 + 1.5 * IQR)]
+    
